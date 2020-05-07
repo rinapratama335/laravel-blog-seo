@@ -1,36 +1,54 @@
-## Membuat Validasi Form Kategori
+## Membuat Update Data Kategori
 
-Di controller category
+Di views/admin/category/index.blade.php ubah linknya menuju edit
 ```
-public function store(Request $request)
+<a href="{{ route('category.edit', $data->id) }}" class="btn btn-warning btn-sm">Edit</a>
+```
+
+Di controller category function edit
+```
+public function edit($id)
 {
-    $this->validate($request, [
-        'name' => 'required|min: 3'
-    ]);
-
-    .
-    .
-
-    return redirect()->back()->with('success', 'Data berhasil disimpan');
+    $category = Category::findorfail($id);
+    return view('admin.category.edit', compact('category'));
 }
 ```
-`with('success', 'Data berhasil disimpan')` artinya kita membuat flash message saat data berhasil disimpan.
 
-
-Di views/admin/category/create.blade.php
+Untuk form pada views/admin/category/edit.blade.php
 ```
-@if(count($errors) > 0)
-    @foreach($errors->all() as $error)
-        <div class="alert alert-danger">
-            {{ $error }}
-        </div>
-    @endforeach
-@endif
-
-@if(Session::has('success'))
-    <div class="alert alert-success">
-        {{ Session('success') }}
+<form method="post" action="{{ route('category.update', $category->id) }}">
+    @csrf {{-- Ini wajib ada di form laravel, karena untuk keamanan --}}
+    @method('patch')
+    <div class="form-group">
+        <label>Nama Kategori</label>
+        <input type="text" class="form-control" name="name" value={{ $category->name }}>
     </div>
-@endif
+    <div class="form-group">
+        <button class="btn btn-primary btn-sm btn-block">Simpan</button>
+    </div>
+</form>
 ```
-Kode di atas adalah kode untuk menampilkan error apabila terdapat kesalahan / pada saat validasi berjalan. Dan yang kedua adalah kode untuk menampilkan message ketika data berhasil disimpan.
+`action` kita arahkan ke function update
+`@method('patch')` ada dua type method yang bisa kita pakai, patch/put
+`value={{ $category->name }}` untuk menampilkan datayang akan diedit.
+`$category` didapat dari function edit.
+
+Di function update
+```
+public function update(Request $request, $id)
+{
+    $this->validate($request, [
+        'name' => 'required'
+    ]);
+
+    $category_data = [
+        'name' => $request->name,
+        'slug' => Str::slug($request->name)
+    ];
+
+    Category::whereId($id)->update($category_data);
+    return redirect()->route('category.index')->with('success', 'Data berhasil diupdate');
+}
+```
+
+Kita bisa tampilkan flash message di inde juga, sama halnya seperi kita menambahkan data
