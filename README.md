@@ -1,54 +1,23 @@
-## Membuat Update Data Kategori
+## Delete Data Kategori
 
-Di views/admin/category/index.blade.php ubah linknya menuju edit
+Di views/admin/category/index.blade.php ubah button hapus seperti ini
 ```
-<a href="{{ route('category.edit', $data->id) }}" class="btn btn-warning btn-sm">Edit</a>
-```
-
-Di controller category function edit
-```
-public function edit($id)
-{
-    $category = Category::findorfail($id);
-    return view('admin.category.edit', compact('category'));
-}
-```
-
-Untuk form pada views/admin/category/edit.blade.php
-```
-<form method="post" action="{{ route('category.update', $category->id) }}">
-    @csrf {{-- Ini wajib ada di form laravel, karena untuk keamanan --}}
-    @method('patch')
-    <div class="form-group">
-        <label>Nama Kategori</label>
-        <input type="text" class="form-control" name="name" value={{ $category->name }}>
-    </div>
-    <div class="form-group">
-        <button class="btn btn-primary btn-sm btn-block">Simpan</button>
-    </div>
+<form action="{{ route('category.destroy', $data->id) }}" method="post">
+    @csrf
+    @method('delete')
+    <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
 </form>
 ```
-`action` kita arahkan ke function update
-`@method('patch')` ada dua type method yang bisa kita pakai, patch/put
-`value={{ $category->name }}` untuk menampilkan datayang akan diedit.
-`$category` didapat dari function edit.
+Kenapa harus form? karena kita akan mengakses database secara langsung. Sedangkan untuk kasus edit ini kita juga akses ke database tetapi hanya menampilkan data saja
+Tambahkan `@csrf` dan `@method('delete')` supaya button berfungsi
 
-Di function update
+Di function destroy pada controller category
 ```
-public function update(Request $request, $id)
+public function destroy($id)
 {
-    $this->validate($request, [
-        'name' => 'required'
-    ]);
+    $category = Category::findorfail($id);
+    $category->delete();
 
-    $category_data = [
-        'name' => $request->name,
-        'slug' => Str::slug($request->name)
-    ];
-
-    Category::whereId($id)->update($category_data);
-    return redirect()->route('category.index')->with('success', 'Data berhasil diupdate');
+    return redirect()->back()->with('success', 'Data berhasil dihapus');
 }
 ```
-
-Kita bisa tampilkan flash message di inde juga, sama halnya seperi kita menambahkan data
