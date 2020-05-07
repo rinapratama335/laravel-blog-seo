@@ -1,23 +1,41 @@
-## Membuat Paginasi dan Penomoran Item Kategori
+## Membuat Fitur Tambah Data Kategori Dan Slug Kategori
 
-### Paginasi
-Di controller kategori :
+Di controller category function create
 ```
-$category = Category::paginate(10);
-```
-Kemudian di view tinggal kita tampilkan paginasinya :
-```
-{{ $category->links() }}
+public function create()
+{
+    return view('admin.category.create');
+}
 ```
 
-### Penomoran kategori
+Di `views/admin/category/create.blade.php`
 ```
-@foreach($category as $hasil => $data)
-    <tr>
-        <td>{{ $hasil + $category->firstitem() }}</td>
-        ..
-        ..
-    </tr>
-@endforeach
+<form method="post" action="{{ route('category.store') }}">
+    @csrf
+    .
+    .
+</form>
 ```
-Kode di atas berfungsi untuk membuat nomor berurut secara otomatis dan pada saat menggunakan pagination ketika berpindah ke halaman lain maka nomor halaman akan tetap sesuai urutan (bukan dimulai dari 1 lagi)
+`@csrf` digunakan untuk membuat keamanan pada form. Di Laravel ini wajib digunakan karena jika tidak maka akan mengeluarkan exception.
+`@csrf` ini adalah field tersembunyi yang akan meggenerate sebuah token tertentu yang akan digunakan oleh laravel.
+
+Di contrller category function store
+```
+public function store(Request $request)
+{
+    $category = Category::create([
+        'name' => $request->name,
+        'slug' => Str::slug($request->name)
+    ]);
+
+    return redirect()->back();
+}
+```
+`'slug' => Str::slug($request->name)` ini adalah fungsi yang disediakan oleh Laravel untuk menggenerate slug. Untuk memakai ini maka kita harus mengincludekan `use Illuminate\Support\Str` di controller category
+
+Di Model Controller
+```
+protected $fillable = ['name', 'slug'];
+```
+
+Kode ini digunakan Laravel untuk mengizinkan field atau data apa saja yang bisa dimasukkan ke database

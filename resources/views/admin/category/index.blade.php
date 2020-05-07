@@ -1,7 +1,9 @@
 @extends('template_backend.home')
 
+@section('subjudul', 'Kategori')
+
 @section('content')
-    <h2>Ini adalah Category</h2>
+    <a href="{{ route('category.create') }}" class="btn btn-primary btn-sm">Tambah Kategori</a><br /><br />
 
     <table class="table table-striped table-hover table-bordered table-sm">
         <thead>
