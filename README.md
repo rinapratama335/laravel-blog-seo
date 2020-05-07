@@ -1,41 +1,36 @@
-## Membuat Fitur Tambah Data Kategori Dan Slug Kategori
+## Membuat Validasi Form Kategori
 
-Di controller category function create
-```
-public function create()
-{
-    return view('admin.category.create');
-}
-```
-
-Di `views/admin/category/create.blade.php`
-```
-<form method="post" action="{{ route('category.store') }}">
-    @csrf
-    .
-    .
-</form>
-```
-`@csrf` digunakan untuk membuat keamanan pada form. Di Laravel ini wajib digunakan karena jika tidak maka akan mengeluarkan exception.
-`@csrf` ini adalah field tersembunyi yang akan meggenerate sebuah token tertentu yang akan digunakan oleh laravel.
-
-Di contrller category function store
+Di controller category
 ```
 public function store(Request $request)
 {
-    $category = Category::create([
-        'name' => $request->name,
-        'slug' => Str::slug($request->name)
+    $this->validate($request, [
+        'name' => 'required|min: 3'
     ]);
 
-    return redirect()->back();
+    .
+    .
+
+    return redirect()->back()->with('success', 'Data berhasil disimpan');
 }
 ```
-`'slug' => Str::slug($request->name)` ini adalah fungsi yang disediakan oleh Laravel untuk menggenerate slug. Untuk memakai ini maka kita harus mengincludekan `use Illuminate\Support\Str` di controller category
+`with('success', 'Data berhasil disimpan')` artinya kita membuat flash message saat data berhasil disimpan.
 
-Di Model Controller
-```
-protected $fillable = ['name', 'slug'];
-```
 
-Kode ini digunakan Laravel untuk mengizinkan field atau data apa saja yang bisa dimasukkan ke database
+Di views/admin/category/create.blade.php
+```
+@if(count($errors) > 0)
+    @foreach($errors->all() as $error)
+        <div class="alert alert-danger">
+            {{ $error }}
+        </div>
+    @endforeach
+@endif
+
+@if(Session::has('success'))
+    <div class="alert alert-success">
+        {{ Session('success') }}
+    </div>
+@endif
+```
+Kode di atas adalah kode untuk menampilkan error apabila terdapat kesalahan / pada saat validasi berjalan. Dan yang kedua adalah kode untuk menampilkan message ketika data berhasil disimpan.
