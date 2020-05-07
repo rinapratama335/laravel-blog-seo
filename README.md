@@ -1,8 +1,23 @@
-## Membuat Migartion Category dan Menampilkan Data Category
+## Membuat Paginasi dan Penomoran Item Kategori
 
-- `php artisan make:migration create_category_table`
-- `php artisan make:model Category`
-- `php artisan make:controller CategoryController --resource`
-- `php artisan route:list` untuk mengecek list route yang ada di aplikasi kita
+### Paginasi
+Di controller kategori :
+```
+$category = Category::paginate(10);
+```
+Kemudian di view tinggal kita tampilkan paginasinya :
+```
+{{ $category->links() }}
+```
 
-`protected $table = "category"` adalah kode yang kita buat karena model `Category` ini akan mengakses tabel `category`. <b>Sebenarnya</b> di Laravel jika ada model maka tabel yang diakses harus bertipe jamak, jadi kalau model Category maka tabelnya adalah categories. Namun karena penamaan tabelnya tidak umum (menyalahi aturan Laravel) maka kita buat `protected`.
+### Penomoran kategori
+```
+@foreach($category as $hasil => $data)
+    <tr>
+        <td>{{ $hasil + $category->firstitem() }}</td>
+        ..
+        ..
+    </tr>
+@endforeach
+```
+Kode di atas berfungsi untuk membuat nomor berurut secara otomatis dan pada saat menggunakan pagination ketika berpindah ke halaman lain maka nomor halaman akan tetap sesuai urutan (bukan dimulai dari 1 lagi)
