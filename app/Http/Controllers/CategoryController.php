@@ -37,13 +37,17 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        $this->validate($request, [
+            'name' => 'required|min: 3'
+        ]);
+
         // dd($request->all());
         $category = Category::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name)
         ]);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Data berhasil disimpan');
     }
 
     /**
