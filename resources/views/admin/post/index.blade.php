@@ -17,6 +17,7 @@
                 <th>No</th>
                 <th>Judul</th>
                 <th>Kategori</th>
+                <th>Tags</th>
                 <th>Gambar</th>
             </tr>
         </thead>
@@ -26,6 +27,13 @@
                     <td>{{ $hasil + $posts->firstitem() }}</td>
                     <td>{{ $data->judul }}</td>
                     <td>{{ $data->category->name }}</td>
+                    <td>
+                        @foreach($data->tags as $tag)
+                        <ul>
+                            <li>{{ $tag->name }}</li>
+                        </ul>
+                        @endforeach
+                    </td>
                     <td><img src="{{ asset($data->gambar) }}" alt="Gambar error" class="img-fluid" style="width: 100px"></td>
                     <td>
                         <form action="{{ route('post.destroy', $data->id) }}" method="post">
