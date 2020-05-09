@@ -17,6 +17,7 @@
                 <th>No</th>
                 <th>Judul</th>
                 <th>Kategori</th>
+                <th>Gambar</th>
             </tr>
         </thead>
         <tbody>
@@ -25,6 +26,7 @@
                     <td>{{ $hasil + $posts->firstitem() }}</td>
                     <td>{{ $data->judul }}</td>
                     <td>{{ $data->category->name }}</td>
+                    <td><img src="{{ asset($data->gambar) }}" alt="Gambar error" class="img-fluid" style="width: 100px"></td>
                     <td>
                         <form action="{{ route('post.destroy', $data->id) }}" method="post">
                             @csrf

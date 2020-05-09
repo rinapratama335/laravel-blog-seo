@@ -10,5 +10,5 @@ class Posts extends Model
         return $this->belongsTo('App\Category');
     }
 
-    protected $fillable = ['judul','category_id','content','gambar'];
+    protected $fillable = ['judul','category_id','content','gambar', 'slug'];
 }
