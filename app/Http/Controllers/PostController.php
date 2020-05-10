@@ -62,7 +62,7 @@ class PostController extends Controller
         $post->tags()->attach($request->tags);
 
         $gambar->move('public/upload/posts/', $new_gambar);
-        return redirect()->back()->with('success', 'Berhasil menyimpan post');
+        return redirect()->route('post.index')->with('success', 'Berhasil menyimpan post');
     }
 
     /**
@@ -136,7 +136,7 @@ class PostController extends Controller
 
         $post->update($post_data);
 
-        return redirect()->back()->with('success', 'Berhasil mengupdate post');
+        return redirect()->route('post.index')->with('success', 'Berhasil mengupdate post');
     }
 
     /**

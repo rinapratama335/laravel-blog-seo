@@ -19,6 +19,7 @@
                 <th>Kategori</th>
                 <th>Tags</th>
                 <th>Gambar</th>
+                <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
