@@ -84,7 +84,11 @@ class PostController extends Controller
      */
     public function edit($id)
     {
-        //
+        $category = Category::all();
+        $tags = Tags::all();
+        $post = Posts::findorfail($id);
+
+        return view('admin.post.edit', compact('post', 'category', 'tags'));
     }
 
     /**
@@ -96,7 +100,43 @@ class PostController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'judul' => 'required',
+            'category_id' => 'required',
+            'content' => 'required',
+        ]);
+
+        $post = Posts::findorfail($id);
+
+        if($request->has('gambar')) {
+            $gambar = $request->gambar;
+            $new_gambar = time().$gambar->getClientoriginalName();
+            $gambar->move('public/upload/posts/', $new_gambar);
+
+            $post_data = [
+                'judul' => $request->judul,
+                'category_id' => $request->category_id,
+                'content' => $request->content,
+                'gambar' => 'public/upload/posts/'.$new_gambar,
+                'slug' => Str::slug($request->judul)
+            ];
+
+            $post->tags()->sync($request->tags);
+        } else {
+            $post_data = [
+                'judul' => $request->judul,
+                'category_id' => $request->category_id,
+                'content' => $request->content,
+                'slug' => Str::slug($request->judul)
+            ];
+
+            $post->tags()->sync($request->tags);
+        }
+
+
+        $post->update($post_data);
+
+        return redirect()->back()->with('success', 'Berhasil mengupdate post');
     }
 
     /**
