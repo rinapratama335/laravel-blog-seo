@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Posts;
 use App\Category;
 use App\Tags;
+use Auth;
 use Illuminate\Support\Str;
 
 class PostController extends Controller
@@ -56,7 +57,8 @@ class PostController extends Controller
             'category_id' => $request->category_id,
             'content' => $request->content,
             'gambar' => 'public/upload/posts/'.$new_gambar,
-            'slug' => Str::slug($request->judul)
+            'slug' => Str::slug($request->judul),
+            'users_id' => Auth::id() //mengambil user_id dari user yang sudah login
         ]);
 
         $post->tags()->attach($request->tags);

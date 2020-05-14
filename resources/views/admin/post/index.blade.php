@@ -18,6 +18,7 @@
                 <th>Judul</th>
                 <th>Kategori</th>
                 <th>Tags</th>
+                <th>Creator</th>
                 <th>Gambar</th>
                 <th>Aksi</th>
             </tr>
@@ -31,11 +32,12 @@
                     <td>
                         @foreach($data->tags as $tag)
                         <ul>
-                            <li>{{ $tag->name }}</li>
+                            <h6><span class="badge badge-primary">{{ $tag->name }}</span></h6>
                         </ul>
                         @endforeach
                     </td>
-                    <td><img src="{{ asset($data->gambar) }}" alt="Gambar error" class="img-fluid" style="width: 100px"></td>
+                    <td>{{ $data->users->name }}</td>
+                    <td><img src="{{ asset($data->gambar) }}" alt="Gambar error" class="img-fluid" style="width: 100px; height: 100px;"></td>
                     <td>
                         <form action="{{ route('post.destroy', $data->id) }}" method="post">
                             @csrf
