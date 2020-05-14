@@ -17,6 +17,9 @@
             <li>
                 <a class="nav-link" href="{{ route('post.index') }}">List Posts</a>
             </li>
+            <li>
+                <a class="nav-link" href="{{ route('post.tampil_hapus') }}">Trash Posts</a>
+            </li>
         </ul>
       </li>
       <li class="dropdown">
