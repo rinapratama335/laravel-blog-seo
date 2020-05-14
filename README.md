@@ -1,48 +1,55 @@
-## Membuat Login
+## Menambahkan Creator Post
 
-Pertama kita install `laravel ui` (di larvel versi 6 laravel ui tidak diincludkan). Versi yang kita install adalah versi 1 karena varsi 2 tidak kompatibel dengan laravel 6.
+Kali ini kita akan menambahakan creator pada saat membuat post. Jadi post yang muncul akan diketahui dibuat oleh siapa.
+Pertama kita tambahkan field `users_id` di tabel `posts` :
 ```
-composer require laravel/ui="1.*" --dev
+php artisan make:migration tambah_field_user_post
 ```
-
-Kemudian kita buat `auth` dengan menjalankan perintah berikut :
 ```
-php artisan ui vue --auth
-```
-Pada saat ini dijalankan maka akan terdapat konfirmasi kalau `home.blade.php` sudah ada (karena kita sudah membuat file home.blade.php di folder views). Kita `yes` saja karena kita akan sesuaikan file home.blade.php kita nanti.
-
-Sebenarnya jika kita akses halaman login ini (/login) maka fungsinya akan berjalan. Namun untuk tampilan css dan js belum dicompile oleh Laravel. Maka kita perlu ketikkan perintah berukut :
-```
-npm install && npm run dev
+public function up()
+{
+    Schema::table('posts', function(Blueprint $table) {
+        $table->integer('user_id');
+    });
+}
 ```
 
-Kemudian tinggal kita sesuaikan saja dengan aplikasi kita, misal :
-kita ubah di file home.blade.php bagian extends menjadi seperti ini :
+Kemudian di controller post pada function store kita tambahkan `users_id` dengan mengambil users_id dari user yang sedang login :
 ```
-@extends('template_backend.home')
+$post = Posts::create([
+    'judul' => $request->judul,
+    'category_id' => $request->category_id,
+    'content' => $request->content,
+    'gambar' => 'public/upload/posts/'.$new_gambar,
+    'slug' => Str::slug($request->judul),
+    'users_id' => Auth::id() //mengambil user_id dari user yang sudah login
+]);
 ```
-
-Lalu di header.blade.php kita aktifkan fungsi tombol logout dengan mengubahnya menjadi seperti ini :
+Jangan lupa kita import `Auth` :
 ```
-<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-    @csrf
-</form>
-
-<a class="dropdown-item" href="{{ route('logout') }}"
-onclick="event.preventDefault();
-document.getElementById('logout-form').submit();">
-{{ __('Logout') }}
-</a>
+use Auth
 ```
 
-Fungsi login dan logout sudah jalan, namun ada satu hal yang masih perlu kita lakukan. Hal itu adalah melindugni route kita agar tidak bisa diakses sebelum kita login.
-Kita akan bungkus route kita dengan membuat group route middleware auth, seperti ini:
+Di model Posts kita tambahkan fillablenya dengan menambahkan field user_id :
 ```
-Route::group(['middleware' => 'auth'], function() {
-    .
-    .
-    route yang dibungkus
-    .
-    .
-});
+protected $fillable = ['judul','category_id','content','gambar', 'slug', 'users_id'];
+```
+
+Kemudian untuk menampilkan creator (user yang membuat post) kita bisa lakukan hal ini :
+Pertama kita buat sebuah function di model post yang mana function ini untuk merelasikan tabel posts dengan tabel users (melalui users_id)
+```
+public function users() {
+    return $this->belongsTo('App\User');
+}
+```
+
+Kemudian di view index post tinggal kita panggil :
+```
+<td>{{ $data->users->name }}</td>
+```
+`users` diambil dari function users yang sudah kita buat di model Posts tadi.
+
+Selain itu kita juga akan mengubah tampilan `Hi, Admin` di header menjadi nama user yang login. Caranya adalah kita panggil aja auth name usernya :
+```
+Hi, {{ Auth::user()->name }}
 ```
