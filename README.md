@@ -1,115 +1,113 @@
-## Edit Post
+## Membuat Soft Delete dan Restore
 
-Edit post di sini mencakup edit gambar, tags, dan lain lainnya.
+### Soft Delete
+Soft delete adalah fitur yang ada di laravel yang mana ketika kit menghapus data maka data tidak akan terhapus secara langsung di database, yang mana akan ditampung terlebih dahulu ke dalam data delete sementara. Jadi seandainya data tersebut ternyata tidak ingin dihpus maka kita bisa lakukan restore data kembali.
 
-Di function edit kita isi dengan kode berikut :
+Pertama yang perlu kita lakukan adalah kita include SoftDeletes di model Posts
 ```
-public function edit($id)
-{
-    $category = Category::all();
-    $tags = Tags::all();
-    $post = Posts::findorfail($id);
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-    return view('admin.post.edit', compact('post', 'category', 'tags'));
+class Posts extends Model
+{
+    use SoftDeletes;
+    .
+    .
+    .
 }
 ```
 
-Kemudian di form edit kita berika kode berikut :
+Kita juga akan buat penambahan field baru di tabel posts dagan nama `delete_at`. Field ini akan berisi timestamp yang menunjukkan waktu dari data saat dihapus. Sederhananya ketika kita melakukan delete data maka data sebenarnya belum hilang dari database, tetapi akan dipindahkan ke dalam semacam trashed table yang yang ditandai dengan field delete_as ini akan terisi. Sehingga data yang field delete_at ini ada isinya maka tidak ditampilkan ke list.
 ```
-<form method="post" action="{{ route('post.update', $post->id) }}" enctype="multipart/form-data">
+php artisan make:migration tambah_softdelete_ke_post
+```
+```
+public function up()
+{
+    Schema::table('posts', function (Blueprint $table) {
+        $table->softDeletes();
+    });
+}
+```
+
+Tinggal kita fungsikan tombol `Delete` yang ada di list post :
+```
+public function destroy($id)
+{
+    $post = Posts::findorfail($id);
+    $post->delete();
+
+    return redirect()->back()->with('success', 'Post berhasil dihapus (silahkan cek trush post)');
+}
+```
+
+Kemudian kita juga akan membuat list untuk data yang sudah duhapus dengan menggunakna SoftDeletes tadi. Kita juga akan membuat button untuk restore data dan permanent delete di dalam list tersebut.
+
+Buat route terlebih dahulu di routes/web.php :
+```
+Route::get('/post/tampil_hapus', 'PostController@tampil_hapus')->name('post.tampil_hapus');
+```
+
+Kemudian di sidebar.blade.php kita buat link untuk mengarahakn ke trashed post :
+```
+<li>
+    <a class="nav-link" href="{{ route('post.tampil_hapus') }}">Trash Posts</a>
+</li>
+```
+```
+public function tampil_hapus() {
+    $post = Posts::onlyTrashed()->paginate(10); //ini karena menggunakan pagination, jika tidak maka kita bisa gunakan 'get' saja.
+    return view('admin.post.hapus', compact('post'));
+}
+```
+Lalu viewnya di views/admin/post/hapus.blade.php :
+```
+Untuk kode view-nya bisa dilihat di dalam file ya
+```
+
+### Restore Data
+jika tadi sudah membuat soft delet maka kita bisa membuat fungsi restore data yaitu mengembalika data yang sebelumnya sudah dihapus.
+
+pertama kita fungsikan tombol restore nya di views/admin/post/hapus.blade.php :
+```
+<a href="{{ route('post.restore', $data->id) }}" class="btn btn-primary btn-sm">Restore</a>
+```
+Lalu kita buat routenya :
+```
+Route::get('/post/restore/{id}', 'PostController@restore')->name('post.restore');
+```
+Tinggal kita buat function nya :
+```
+public function restore($id) {
+    $post = Posts::withTrashed()->where('id', $id)->first();
+    $post->restore();
+
+    return redirect()->back()->with('success', 'Data berhasil direstore, silahkan cek list post');
+}
+```
+
+### Hapus Permanent
+Hapus permanent ini kita pakai untuk menghapus data dari database (hapus secara permanent)
+
+Kita fungsikan tombolnya dengan menambahkan action di form menjadi seperti ini :
+```
+<form action="{{ route('post.permanent_delete', $data->id) }}" method="post">
     @csrf
-    @method('patch')
-    <div class="form-group">
-        <label>Judul</label>
-        <input type="text" class="form-control" name="judul" value="{{ $post->judul }}">
-    </div>
-    <div class="form-group">
-        <label>Kategori</label>
-        <select name="category_id" id="" class="form-control">
-            <option value="" holder>Pilih kategori</option>
-            @foreach($category as $data)
-                <option value="{{ $data->id }}"
-                    @if($post->category_id == $data->id)
-                        selected
-                    @endif
-                >
-                    {{ $data->name }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Pilih Tags</label>
-        <select class="form-control select2" multiple="" name="tags[]">
-            @foreach($tags as $tag)
-                <option value="{{ $tag->id }}"
-                    @foreach($post->tags as $value)
-                        @if($tag->id == $value->id)
-                            selected
-                        @endif
-                    @endforeach
-                >{{ $tag->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Konten</label>
-        <textarea class="form-control" name="content">{{ $post->content }}</textarea>
-    </div>
-    <div class="form-group">
-        <label>Gambar</label>
-        <input type="file" class="form-control" name="gambar">
-    </div>
-    <div class="form-group">
-        <button class="btn btn-primary btn-sm btn-block">Simpan</button>
-    </div>
+    @method('DELETE')
+
+    <button type="submit" class="btn btn-danger btn-sm">Permanant Delete</button>
 </form>
 ```
-Jangan lupa kasih `@method('patch')` karena kita akan memlakukan edit.
-
-Kemudian di function update kita isi dengan kode berikut :
+Jangan lupa buat routenya :
 ```
-public function update(Request $request, $id)
-{
-    $this->validate($request, [
-        'judul' => 'required',
-        'category_id' => 'required',
-        'content' => 'required',
-    ]);
+Route::delete('/post/permanent_delete/{id}', 'PostController@permanent_delete')->name('post.permanent_delete');
+```
+Kemudian buat fungtion nya :
+```
+public function permanent_delete($id) {
+    $post = Posts::withTrashed()->where('id', $id)->first();
+    $post->forceDelete();
 
-    $post = Posts::findorfail($id);
-
-    if($request->has('gambar')) {
-        $gambar = $request->gambar;
-        $new_gambar = time().$gambar->getClientoriginalName();
-        $gambar->move('public/upload/posts/', $new_gambar);
-
-        $post_data = [
-            'judul' => $request->judul,
-            'category_id' => $request->category_id,
-            'content' => $request->content,
-            'gambar' => 'public/upload/posts/'.$new_gambar,
-            'slug' => Str::slug($request->judul)
-        ];
-
-        $post->tags()->sync($request->tags);
-    } else {
-        $post_data = [
-            'judul' => $request->judul,
-            'category_id' => $request->category_id,
-            'content' => $request->content,
-            'slug' => Str::slug($request->judul)
-        ];
-
-        $post->tags()->sync($request->tags);
-    }
-
-
-    $post->update($post_data);
-
-    return redirect()->back()->with('success', 'Berhasil mengupdate post');
+    return redirect()->back()->with('success', 'Data berhasil dihapus secara permanen');
 }
 ```
-`if else` di atas adalah untuk memeriksa apakah gambar diupdate atau tidak.
-Jika di saat menyimpan data kita memasukkan `tags` dengan method `attach` maka saat update data kita memasukkan `tags` dengan method `sync`.
-Jangan lupa `tags` di sini berfungsi sebagai pivot tabel.
+
