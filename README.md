@@ -1,113 +1,48 @@
-## Membuat Soft Delete dan Restore
+## Membuat Login
 
-### Soft Delete
-Soft delete adalah fitur yang ada di laravel yang mana ketika kit menghapus data maka data tidak akan terhapus secara langsung di database, yang mana akan ditampung terlebih dahulu ke dalam data delete sementara. Jadi seandainya data tersebut ternyata tidak ingin dihpus maka kita bisa lakukan restore data kembali.
-
-Pertama yang perlu kita lakukan adalah kita include SoftDeletes di model Posts
+Pertama kita install `laravel ui` (di larvel versi 6 laravel ui tidak diincludkan). Versi yang kita install adalah versi 1 karena varsi 2 tidak kompatibel dengan laravel 6.
 ```
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Posts extends Model
-{
-    use SoftDeletes;
-    .
-    .
-    .
-}
+composer require laravel/ui="1.*" --dev
 ```
 
-Kita juga akan buat penambahan field baru di tabel posts dagan nama `delete_at`. Field ini akan berisi timestamp yang menunjukkan waktu dari data saat dihapus. Sederhananya ketika kita melakukan delete data maka data sebenarnya belum hilang dari database, tetapi akan dipindahkan ke dalam semacam trashed table yang yang ditandai dengan field delete_as ini akan terisi. Sehingga data yang field delete_at ini ada isinya maka tidak ditampilkan ke list.
+Kemudian kita buat `auth` dengan menjalankan perintah berikut :
 ```
-php artisan make:migration tambah_softdelete_ke_post
+php artisan ui vue --auth
 ```
+Pada saat ini dijalankan maka akan terdapat konfirmasi kalau `home.blade.php` sudah ada (karena kita sudah membuat file home.blade.php di folder views). Kita `yes` saja karena kita akan sesuaikan file home.blade.php kita nanti.
+
+Sebenarnya jika kita akses halaman login ini (/login) maka fungsinya akan berjalan. Namun untuk tampilan css dan js belum dicompile oleh Laravel. Maka kita perlu ketikkan perintah berukut :
 ```
-public function up()
-{
-    Schema::table('posts', function (Blueprint $table) {
-        $table->softDeletes();
-    });
-}
+npm install && npm run dev
 ```
 
-Tinggal kita fungsikan tombol `Delete` yang ada di list post :
+Kemudian tinggal kita sesuaikan saja dengan aplikasi kita, misal :
+kita ubah di file home.blade.php bagian extends menjadi seperti ini :
 ```
-public function destroy($id)
-{
-    $post = Posts::findorfail($id);
-    $post->delete();
-
-    return redirect()->back()->with('success', 'Post berhasil dihapus (silahkan cek trush post)');
-}
+@extends('template_backend.home')
 ```
 
-Kemudian kita juga akan membuat list untuk data yang sudah duhapus dengan menggunakna SoftDeletes tadi. Kita juga akan membuat button untuk restore data dan permanent delete di dalam list tersebut.
-
-Buat route terlebih dahulu di routes/web.php :
+Lalu di header.blade.php kita aktifkan fungsi tombol logout dengan mengubahnya menjadi seperti ini :
 ```
-Route::get('/post/tampil_hapus', 'PostController@tampil_hapus')->name('post.tampil_hapus');
-```
-
-Kemudian di sidebar.blade.php kita buat link untuk mengarahakn ke trashed post :
-```
-<li>
-    <a class="nav-link" href="{{ route('post.tampil_hapus') }}">Trash Posts</a>
-</li>
-```
-```
-public function tampil_hapus() {
-    $post = Posts::onlyTrashed()->paginate(10); //ini karena menggunakan pagination, jika tidak maka kita bisa gunakan 'get' saja.
-    return view('admin.post.hapus', compact('post'));
-}
-```
-Lalu viewnya di views/admin/post/hapus.blade.php :
-```
-Untuk kode view-nya bisa dilihat di dalam file ya
-```
-
-### Restore Data
-jika tadi sudah membuat soft delet maka kita bisa membuat fungsi restore data yaitu mengembalika data yang sebelumnya sudah dihapus.
-
-pertama kita fungsikan tombol restore nya di views/admin/post/hapus.blade.php :
-```
-<a href="{{ route('post.restore', $data->id) }}" class="btn btn-primary btn-sm">Restore</a>
-```
-Lalu kita buat routenya :
-```
-Route::get('/post/restore/{id}', 'PostController@restore')->name('post.restore');
-```
-Tinggal kita buat function nya :
-```
-public function restore($id) {
-    $post = Posts::withTrashed()->where('id', $id)->first();
-    $post->restore();
-
-    return redirect()->back()->with('success', 'Data berhasil direstore, silahkan cek list post');
-}
-```
-
-### Hapus Permanent
-Hapus permanent ini kita pakai untuk menghapus data dari database (hapus secara permanent)
-
-Kita fungsikan tombolnya dengan menambahkan action di form menjadi seperti ini :
-```
-<form action="{{ route('post.permanent_delete', $data->id) }}" method="post">
+<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
-    @method('DELETE')
-
-    <button type="submit" class="btn btn-danger btn-sm">Permanant Delete</button>
 </form>
-```
-Jangan lupa buat routenya :
-```
-Route::delete('/post/permanent_delete/{id}', 'PostController@permanent_delete')->name('post.permanent_delete');
-```
-Kemudian buat fungtion nya :
-```
-public function permanent_delete($id) {
-    $post = Posts::withTrashed()->where('id', $id)->first();
-    $post->forceDelete();
 
-    return redirect()->back()->with('success', 'Data berhasil dihapus secara permanen');
-}
+<a class="dropdown-item" href="{{ route('logout') }}"
+onclick="event.preventDefault();
+document.getElementById('logout-form').submit();">
+{{ __('Logout') }}
+</a>
 ```
 
+Fungsi login dan logout sudah jalan, namun ada satu hal yang masih perlu kita lakukan. Hal itu adalah melindugni route kita agar tidak bisa diakses sebelum kita login.
+Kita akan bungkus route kita dengan membuat group route middleware auth, seperti ini:
+```
+Route::group(['middleware' => 'auth'], function() {
+    .
+    .
+    route yang dibungkus
+    .
+    .
+});
+```
