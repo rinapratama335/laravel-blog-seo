@@ -25,7 +25,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.user.create');
     }
 
     /**
@@ -36,7 +36,26 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'name' => 'required|min: 3|max: 100',
+            'email' => 'required|email',
+            'tipe' => 'required'
+        ]);
+
+        if($request->input('password')) {
+            $password = bcrypt($request->password);
+        } else {
+            $password = bcrypt('1234');
+        }
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $password,
+            'tipe' => $request->tipe
+        ]);
+
+        return redirect()->route('user.index')->with('success', 'User berhasil disimpan');
     }
 
     /**
@@ -58,7 +77,8 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        //
+        $user = User::findorfail($id);
+        return view('admin.user.edit', compact('user'));
     }
 
     /**
@@ -70,7 +90,28 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'name' => 'required|min: 3|max: 100',
+            'tipe' => 'required'
+        ]);
+
+        if($request->input('password')) {
+            $user_data = [
+                'name' => $request->name,
+                'tipe' => $request->tipe,
+                'password' => bcrypt($request->password)
+            ];
+        } else {
+            $user_data = [
+                'name' => $request->name,
+                'tipe' => $request->tipe
+            ];
+        }
+
+        $user = User::findorfail($id);
+        $user->update($user_data);
+
+        return redirect()->route('user.index')->with('success', 'Data berhasil diupdate');
     }
 
     /**
@@ -81,6 +122,9 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $user = User::findorfail($id);
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Berhasil hapus data user');
     }
 }
