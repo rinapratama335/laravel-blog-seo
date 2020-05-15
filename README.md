@@ -1,55 +1,67 @@
-## Menambahkan Creator Post
+## Menampilkan Data User
+Sebelumnya kita sudah memiliki table users dan model User. Sekarang kita akan menampilkan data user.
 
-Kali ini kita akan menambahakan creator pada saat membuat post. Jadi post yang muncul akan diketahui dibuat oleh siapa.
-Pertama kita tambahkan field `users_id` di tabel `posts` :
+Pertama kita buat controller user terlebih dahulu :
 ```
-php artisan make:migration tambah_field_user_post
+php artisan make:controller UserController --resource
+```
+
+Kemudian di menu sidbar jangan lupa kita buat menu untuk User
+```
+<li class="dropdown">
+    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-user"></i> <span>User</span></a>
+    <ul class="dropdown-menu">
+        <li>
+            <a class="nav-link" href="{{ route('user.index') }}">List User</a>
+        </li>
+    </ul>
+  </li>
+```
+
+Kita definisikan di route web nya, kita masukkan di dalam route group middleware
+```
+Route::resource('/user', 'UserController')
+```
+
+### Jika sudah tinggal kita tampilkan data user di index.
+Pertama di function index controller user kita tambahkan kode berikut :
+```
+public function index()
+{
+    $user = User::paginate(10);
+    return view('admin.user.index', compact('user'));
+}
+```
+Jangan lupa kita include model User di controller-nya :
+```
+use App\User
+```
+
+Kemudian kita buat folder user di dalam folder admin, di dalamnya kita buat file index.blade.php (untuk isinya bisa dilihat di file ya).
+
+### Menambahkan Role User
+Nah kita akan tambahkan field untuk membedakan role user ini (apakah admin ataukah creator).
+
+Pertama kita buat migration untuk menambahkan tipe usernya :
+```
+php artisan make:migration add_tipe_user
 ```
 ```
 public function up()
 {
-    Schema::table('posts', function(Blueprint $table) {
-        $table->integer('user_id');
+    Schema::table('users', function(Blueprint $table) {
+        $table->boolean('tipe')->default(0);
     });
 }
 ```
 
-Kemudian di controller post pada function store kita tambahkan `users_id` dengan mengambil users_id dari user yang sedang login :
+Jika sudah tinggal kita tampilkan datanya seperti ini :
 ```
-$post = Posts::create([
-    'judul' => $request->judul,
-    'category_id' => $request->category_id,
-    'content' => $request->content,
-    'gambar' => 'public/upload/posts/'.$new_gambar,
-    'slug' => Str::slug($request->judul),
-    'users_id' => Auth::id() //mengambil user_id dari user yang sudah login
-]);
-```
-Jangan lupa kita import `Auth` :
-```
-use Auth
-```
-
-Di model Posts kita tambahkan fillablenya dengan menambahkan field user_id :
-```
-protected $fillable = ['judul','category_id','content','gambar', 'slug', 'users_id'];
-```
-
-Kemudian untuk menampilkan creator (user yang membuat post) kita bisa lakukan hal ini :
-Pertama kita buat sebuah function di model post yang mana function ini untuk merelasikan tabel posts dengan tabel users (melalui users_id)
-```
-public function users() {
-    return $this->belongsTo('App\User');
-}
-```
-
-Kemudian di view index post tinggal kita panggil :
-```
-<td>{{ $data->users->name }}</td>
-```
-`users` diambil dari function users yang sudah kita buat di model Posts tadi.
-
-Selain itu kita juga akan mengubah tampilan `Hi, Admin` di header menjadi nama user yang login. Caranya adalah kita panggil aja auth name usernya :
-```
-Hi, {{ Auth::user()->name }}
+<td>
+    @if($data->tipe == 1)
+        <span class="badge badge-dark">Administrator</span>
+        @else
+        <span class="badge badge-primary">Author</span>
+    @endif
+</td>
 ```
