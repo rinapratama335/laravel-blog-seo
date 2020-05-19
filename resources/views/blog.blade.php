@@ -92,7 +92,7 @@
                     <!-- /row -->
 
                 </div>
-            </div>
+
             <!-- /row -->
 
 @endsection

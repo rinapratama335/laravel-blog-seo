@@ -55,7 +55,7 @@
         </div>
         <div class="form-group">
             <label>Konten</label>
-            <textarea class="form-control" name="content">{{ $post->content }}</textarea>
+            <textarea class="form-control" name="content" id="content">{{ $post->content }}</textarea>
         </div>
         <div class="form-group">
             <label>Gambar</label>
@@ -65,4 +65,9 @@
             <button class="btn btn-primary btn-sm btn-block">Simpan</button>
         </div>
     </form>
+
+    <script src="https://cdn.ckeditor.com/4.14.0/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace( 'content' );
+    </script>
 @endsection
