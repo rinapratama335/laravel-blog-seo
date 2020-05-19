@@ -22,7 +22,7 @@
         <div class="col-md-8 hot-post-left">
         <br>
         <div class="section-row">
-            {{ $isi->content }}
+            {!! $isi->content !!}
         </div>
         </div>
     @endforeach
